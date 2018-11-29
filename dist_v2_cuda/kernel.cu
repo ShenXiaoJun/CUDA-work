@@ -13,8 +13,8 @@ void distanceKernel(float *d_out, float *d_in, float ref){
 	const int i = blockIdx.x*blockDim.x + threadIdx.x;
 	const float x = d_in[i];
 	d_out[i] = distance(x, ref);
-	printf("blockIdx:%2d,blockDim:%2d,threadIdx:%2d,i = %2d:dist from %f to %f.\n",
-		blockIdx.x,blockDim.x,threadIdx.x, i, ref, x, d_out[i]);
+	//printf("blockIdx:%2d,blockDim:%2d,threadIdx:%2d,i = %2d:dist from %f to %f.\n",
+	//	blockIdx.x,blockDim.x,threadIdx.x, i, ref, x, d_out[i]);
 }
 
 void distanceArray(float *out, float *in, float ref, int len){
