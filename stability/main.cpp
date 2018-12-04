@@ -17,8 +17,11 @@ void render(){
 	uchar4 *d_out = 0;
 	cudaGraphicsMapResources(1, &cuda_pbo_resource, 0);
 	cudaGraphicsResourceGetMappedPointer((void **)&d_out, NULL, cuda_pbo_resource);
-	kernelLauncher(d_out, W, H, loc);
+	kernelLauncher(d_out, W, H, param, sys);
 	cudaGraphicsUnmapResources(1, &cuda_pbo_resource, 0);
+	char title[64];
+	sprintf(title, "Stability: param = %.1f, sys = %d", param, sys);
+	glutSetWindowTitle(title);
 }
 
 void drawTexture(){
@@ -44,10 +47,10 @@ void initGLUT(int *argc, char **argv){
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(W, H);
 	glutCreateWindow(TITLE_STRING);
+	glewInit();
 }
 
 void initPixelBuffer(){
-	glewInit();
 	glGenBuffers(1,&pbo);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, 4*W*H*sizeof(GLubyte), 0, GL_STREAM_DRAW);
