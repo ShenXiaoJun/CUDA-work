@@ -44,10 +44,10 @@ void initGLUT(int *argc, char **argv){
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(W, H);
 	glutCreateWindow(TITLE_STRING);
+	glewInit();
 }
 
 void initPixelBuffer(){
-	glewInit();
 	glGenBuffers(1,&pbo);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, 4*W*H*sizeof(GLubyte), 0, GL_STREAM_DRAW);
