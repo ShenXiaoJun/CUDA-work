@@ -3,4 +3,5 @@
 .cproject
 .project
 .metadata
-dd_ld_global/results.csv
+dd_ld_global/*.csv
+dd_ld_shared/*.csv
