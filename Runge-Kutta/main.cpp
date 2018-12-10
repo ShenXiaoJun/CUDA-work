@@ -1,3 +1,4 @@
+//龙格库达方法数学原理及实现 https://blog.csdn.net/u013007900/article/details/45922331
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,7 +16,7 @@ void Func(double *y, double *d)  {
 //double h; //积分的步长
 //double y[]; //存放n个未知函数在起始点t处的函数值,返回时,其初值在二维数组z的第零列中
 //double z[]; //二维数组,体积为n x k.返回k个积分点上的n个未知函数值
-void RKT(double t, double *y, int n, double h, int k, double *z){
+void RKT(double t, double *y, int n, double h, int k, double (*z)[11]){
 	int i=0,j=0,l=0;
 	double a[4]={0.f},*b=NULL,*d=NULL;
 
@@ -30,7 +31,7 @@ void RKT(double t, double *y, int n, double h, int k, double *z){
 	a[2]=h;
 	a[3]=h;
 	for(i=0; i<=n-1; i++)
-		z[i*k]=y[i]; /*将初值赋给数组z的相应位置*/
+		z[i][0]=y[i]; /*将初值赋给数组z的相应位置*/
 
 	for(l=1; l<=k-1; l++) {
 		Func(y,d);
@@ -38,7 +39,7 @@ void RKT(double t, double *y, int n, double h, int k, double *z){
 			b[i]=y[i];
 		for (j=0; j<=2; j++) {
 			for (i=0; i<=n-1; i++) {
-				y[i]=z[i*k+l-1]+a[j]*d[i];
+				y[i]=z[i][l-1]+a[j]*d[i];
 				b[i]=b[i]+a[j+1]*d[i]/3.0;
 			}
 			Func(y,d);
@@ -46,7 +47,7 @@ void RKT(double t, double *y, int n, double h, int k, double *z){
 		for(i=0; i<=n-1; i++)
 			y[i]=b[i]+h*d[i]/6.0;
 		for(i=0; i<=n-1; i++)
-			z[i*k+l]=y[i];
+			z[i][l]=y[i];
 		t=t+h;
 	}
 	free(b); /*释放存储空间*/
