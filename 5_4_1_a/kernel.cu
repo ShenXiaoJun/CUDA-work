@@ -41,6 +41,7 @@ void tempKernel(uchar4 *d_out, float *d_temp, int w, int h, BC bc){
 	const int s_col = threadIdx.x + RAD;
 	const int s_row = threadIdx.y + RAD;
 	const int s_idx = flatten(s_col, s_row, s_w, s_h);
+	const int fltSz = 2*RAD + 1;
 
 	d_out[idx].x = 0;
 	d_out[idx].z = 0;
@@ -49,12 +50,18 @@ void tempKernel(uchar4 *d_out, float *d_temp, int w, int h, BC bc){
 
 	s_in[s_idx] = d_temp[idx];
 	//load halo cells
+	if(threadIdx.x < RAD && threadIdx.y < RAD){
+		s_in[flatten(s_col - RAD,        s_row - RAD,        s_w, s_h)] = d_temp[flatten(col - RAD,        row - RAD,        w, h)];
+		s_in[flatten(s_col + blockDim.x, s_row - RAD,        s_w, s_h)] = d_temp[flatten(col + blockDim.x, row - RAD,        w, h)];
+		s_in[flatten(s_col - RAD,        s_row + blockDim.y, s_w, s_h)] = d_temp[flatten(col - RAD,        row + blockDim.y, w, h)];
+		s_in[flatten(s_col + blockDim.x, s_row + blockDim.y, s_w, s_h)] = d_temp[flatten(col + blockDim.x, row + blockDim.y, w, h)];
+	}
 	if(threadIdx.x < RAD){
 		s_in[flatten(s_col - RAD,        s_row,              s_w, s_h)] = d_temp[flatten(col - RAD,        row,              w, h)];
 		s_in[flatten(s_col + blockDim.x, s_row,              s_w, s_h)] = d_temp[flatten(col + blockDim.x, row,              w, h)];
 	}
 	if(threadIdx.y < RAD){
-		s_in[flatten(s_col,              s_row - RAD, 		 s_w, s_h)] = d_temp[flatten(col,              row - RAD,        w, h)];
+		s_in[flatten(s_col,              s_row - RAD,        s_w, s_h)] = d_temp[flatten(col,              row - RAD,        w, h)];
 		s_in[flatten(s_col,              s_row + blockDim.y, s_w, s_h)] = d_temp[flatten(col,              row + blockDim.y, w, h)];
 	}
 	//Calculate squared distance from pipe center
@@ -76,10 +83,20 @@ void tempKernel(uchar4 *d_out, float *d_temp, int w, int h, BC bc){
 	}
 	__syncthreads();
 
-	float temp = 0.25f*(s_in[flatten(s_col - 1, s_row, s_w, s_h)] +
-						s_in[flatten(s_col + 1, s_row, s_w, s_h)] +
-						s_in[flatten(s_col, s_row - 1, s_w, s_h)] +
-						s_in[flatten(s_col, s_row + 1, s_w, s_h)]);
+//	float temp = 0.25f*(s_in[flatten(s_col - 1, s_row,     s_w, s_h)] +
+//						s_in[flatten(s_col + 1, s_row,     s_w, s_h)] +
+//						s_in[flatten(s_col,     s_row - 1, s_w, s_h)] +
+//						s_in[flatten(s_col,     s_row + 1, s_w, s_h)]);
+	float temp = 0.05f*(
+			(s_in[flatten(s_col - 1, s_row - 1, s_w, s_h)]      ) +
+			(s_in[flatten(s_col - 1, s_row,     s_w, s_h)] * 4.f) +
+			(s_in[flatten(s_col - 1, s_row + 1, s_w, s_h)]      ) +
+			(s_in[flatten(s_col,     s_row - 1, s_w, s_h)] * 4.f) +
+			(s_in[flatten(s_col,     s_row + 1, s_w, s_h)] * 4.f) +
+			(s_in[flatten(s_col + 1, s_row - 1, s_w, s_h)]      ) +
+			(s_in[flatten(s_col + 1, s_row,     s_w, s_h)] * 4.f) +
+			(s_in[flatten(s_col + 1, s_row + 1, s_w, s_h)]      )
+	);
 
 	d_temp[idx] = temp;
 	const unsigned char intensity = clip((int)temp);
