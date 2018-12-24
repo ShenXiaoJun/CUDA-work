@@ -1,7 +1,7 @@
 #include "kernel.h"
 #define TX 32
 #define TY 32
-#define RAD 1
+#define RAD 2
 
 int divUp(int a, int b) { return (a + b - 1) / b; }
 
@@ -49,19 +49,18 @@ void tempKernel(uchar4 *d_out, float *d_temp, int w, int h, BC bc){
 
 	s_in[s_idx] = d_temp[idx];
 	//load halo cells
-	if(threadIdx.x < RAD && threadIdx.y < RAD){
-		s_in[flatten(s_col - RAD,        s_row - RAD,        s_w, s_h)] = d_temp[flatten(col - RAD,        row - RAD,        w, h)];
-		s_in[flatten(s_col + blockDim.x, s_row - RAD,        s_w, s_h)] = d_temp[flatten(col + blockDim.x, row - RAD,        w, h)];
-		s_in[flatten(s_col - RAD,        s_row + blockDim.y, s_w, s_h)] = d_temp[flatten(col - RAD,        row + blockDim.y, w, h)];
-		s_in[flatten(s_col + blockDim.x, s_row + blockDim.y, s_w, s_h)] = d_temp[flatten(col + blockDim.x, row + blockDim.y, w, h)];
-	}
+
 	if(threadIdx.x < RAD){
-		s_in[flatten(s_col - RAD,        s_row,              s_w, s_h)] = d_temp[flatten(col - RAD,        row,              w, h)];
-		s_in[flatten(s_col + blockDim.x, s_row,              s_w, s_h)] = d_temp[flatten(col + blockDim.x, row,              w, h)];
+		s_in[flatten(s_col - RAD,            s_row, s_w, s_h)] = d_temp[flatten(col - RAD,            row, w, h)];
+		s_in[flatten(s_col - RAD + 1,        s_row, s_w, s_h)] = d_temp[flatten(col - RAD + 1,        row, w, h)];
+		s_in[flatten(s_col + blockDim.x,     s_row, s_w, s_h)] = d_temp[flatten(col + blockDim.x,     row, w, h)];
+		s_in[flatten(s_col + blockDim.x - 1, s_row, s_w, s_h)] = d_temp[flatten(col + blockDim.x - 1, row, w, h)];
 	}
 	if(threadIdx.y < RAD){
-		s_in[flatten(s_col,              s_row - RAD,        s_w, s_h)] = d_temp[flatten(col,              row - RAD,        w, h)];
-		s_in[flatten(s_col,              s_row + blockDim.y, s_w, s_h)] = d_temp[flatten(col,              row + blockDim.y, w, h)];
+		s_in[flatten(s_col, s_row - RAD,            s_w, s_h)] = d_temp[flatten(col, row - RAD,            w, h)];
+		s_in[flatten(s_col, s_row - RAD + 1,        s_w, s_h)] = d_temp[flatten(col, row - RAD + 1,        w, h)];
+		s_in[flatten(s_col, s_row + blockDim.y,     s_w, s_h)] = d_temp[flatten(col, row + blockDim.y,     w, h)];
+		s_in[flatten(s_col, s_row + blockDim.y - 1, s_w, s_h)] = d_temp[flatten(col, row + blockDim.y - 1, w, h)];
 	}
 	//Calculate squared distance from pipe center
 	float dSq = ((col - bc.x)*(col - bc.x) + (row - bc.y)*(row - bc.y));
@@ -82,20 +81,14 @@ void tempKernel(uchar4 *d_out, float *d_temp, int w, int h, BC bc){
 	}
 	__syncthreads();
 
-//	float temp = 0.25f*(s_in[flatten(s_col - 1, s_row,     s_w, s_h)] +
-//						s_in[flatten(s_col + 1, s_row,     s_w, s_h)] +
-//						s_in[flatten(s_col,     s_row - 1, s_w, s_h)] +
-//						s_in[flatten(s_col,     s_row + 1, s_w, s_h)]);
-	float temp = 0.05f*(
-			(s_in[flatten(s_col - 1, s_row - 1, s_w, s_h)]      ) +
-			(s_in[flatten(s_col - 1, s_row,     s_w, s_h)] * 4.f) +
-			(s_in[flatten(s_col - 1, s_row + 1, s_w, s_h)]      ) +
-			(s_in[flatten(s_col,     s_row - 1, s_w, s_h)] * 4.f) +
-			(s_in[flatten(s_col,     s_row + 1, s_w, s_h)] * 4.f) +
-			(s_in[flatten(s_col + 1, s_row - 1, s_w, s_h)]      ) +
-			(s_in[flatten(s_col + 1, s_row,     s_w, s_h)] * 4.f) +
-			(s_in[flatten(s_col + 1, s_row + 1, s_w, s_h)]      )
-	);
+	float temp = 0.125f*(s_in[flatten(s_col - 2, s_row,     s_w, s_h)] +
+                         s_in[flatten(s_col - 1, s_row,     s_w, s_h)] +
+                         s_in[flatten(s_col + 1, s_row,     s_w, s_h)] +
+                         s_in[flatten(s_col + 2, s_row,     s_w, s_h)] +
+                         s_in[flatten(s_col,     s_row - 2, s_w, s_h)] +
+                         s_in[flatten(s_col,     s_row - 1, s_w, s_h)] +
+                         s_in[flatten(s_col,     s_row + 1, s_w, s_h)] +
+	                     s_in[flatten(s_col,     s_row + 2, s_w, s_h)]);
 
 	d_temp[idx] = temp;
 	const unsigned char intensity = clip((int)temp);
