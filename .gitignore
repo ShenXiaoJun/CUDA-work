@@ -6,3 +6,4 @@
 dd_ld_global/*.csv
 dd_ld_shared/*.csv
 out_*.bmp
+*_out.bmp
