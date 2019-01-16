@@ -27,7 +27,7 @@ void centroidKernel(const uchar4 *d_img, int *d_centroidCol,
 	}
 	__syncthreads();
 
-#if 1
+#if 0
 	for(int s = 1; s < blockDim.x; s *= 2){
 		int index = 2*s*s_idx;
 		if(index < blockDim.x){
